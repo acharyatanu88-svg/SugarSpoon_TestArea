@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sugar Spoon Bake Shop</title>
+  <style>
+    :root {
+      --primary: #e8648e;
+      --primary-dark: #d44b75;
+      --secondary: #5c3d2e;
+      --bg: #fff9fa;
+      --card-bg: #ffffff;
+      --text: #333333;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding-bottom: 40px; }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 15px; }
+
+    /* Top Offer Slider Carousel */
+    .slider-container {
+      position: relative; width: 100%; height: 260px; margin: 20px 0;
+      border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      background: var(--secondary);
+    }
+    .slide {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      opacity: 0; transition: opacity 0.8s ease-in-out; display: flex;
+      align-items: center; justify-content: center; background-size: cover; background-position: center;
+    }
+    .slide.active { opacity: 1; }
+    .slide-overlay {
+      background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.7) 100%);
+      width: 100%; height: 100%; display: flex; flex-direction: column;
+      justify-content: flex-end; padding: 25px; color: white;
+    }
+    .slide-tag {
+      background: var(--primary); color: white; padding: 4px 12px;
+      font-weight: bold; border-radius: 20px; font-size: 0.8rem; width: fit-content; margin-bottom: 8px;
+    }
+    .slide-title { font-size: 1.6rem; margin-bottom: 4px; }
+    .slide-subtitle { font-size: 1rem; opacity: 0.9; }
+
+    /* Category Section Layouts */
+    .section-title {
+      font-size: 1.4rem; color: var(--secondary); margin: 30px 0 15px;
+      text-transform: capitalize; border-bottom: 2px solid var(--primary);
+      display: inline-block; padding-bottom: 4px;
+    }
+    .item-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 20px; margin-bottom: 20px;
+    }
+
+    /* Product Card */
+    .card {
+      background: var(--card-bg); border-radius: 10px; overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06); display: flex; flex-direction: column;
+      transition: transform 0.2s;
+    }
+    .card:hover { transform: translateY(-4px); }
+    .card-img { width: 100%; height: 160px; object-fit: cover; background: #eee; }
+    .card-body { padding: 15px; display: flex; flex-direction: column; flex-grow: 1; }
+    .card-title { font-size: 1.1rem; color: var(--secondary); margin-bottom: 6px; }
+    .card-item-name { font-size: 0.85rem; color: #777; margin-bottom: 12px; }
+    .card-footer { margin-top: auto; display: flex; justify-content: space-between; align-items: center; }
+    .card-price { font-size: 1.2rem; font-weight: bold; color: var(--primary-dark); }
+    .btn-order {
+      background: var(--primary); color: white; border: none; padding: 8px 16px;
+      border-radius: 6px; font-weight: 600; cursor: pointer; transition: background 0.2s;
+    }
+    .btn-order:hover { background: var(--primary-dark); }
+
+    /* Order & Customization Modal */
+    .modal-backdrop {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center;
+      z-index: 1000; padding: 15px;
+    }
+    .modal-backdrop.active { display: flex; }
+    .modal {
+      background: white; border-radius: 12px; width: 100%; max-width: 500px;
+      max-height: 90vh; overflow-y: auto; padding: 25px; position: relative;
+    }
+    .modal-close {
+      position: absolute; top: 15px; right: 20px; font-size: 1.5rem;
+      border: none; background: none; cursor: pointer; color: #888;
+    }
+    .modal h2 { color: var(--secondary); margin-bottom: 5px; }
+    .modal p.item-summary { font-size: 0.9rem; color: #666; margin-bottom: 20px; }
+
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 5px; }
+    .form-group input, .form-group select {
+      width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem;
+    }
+
+    .custom-section { border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px; }
+    .custom-title { font-weight: bold; margin-bottom: 10px; color: var(--secondary); }
+    .option-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.9rem; }
+
+    .total-bar {
+      margin-top: 20px; padding-top: 15px; border-top: 2px dashed #eee;
+      display: flex; justify-content: space-between; align-items: center; font-size: 1.2rem; font-weight: bold;
+    }
+    .btn-submit {
+      width: 100%; background: var(--primary); color: white; border: none;
+      padding: 12px; border-radius: 6px; font-size: 1rem; font-weight: bold;
+      margin-top: 15px; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Sliding Banner Area -->
+    <div class="slider-container" id="offerSlider">
+      <div class="slide active">
+        <div class="slide-overlay">
+          <span class="slide-tag">Offers</span>
+          <h3 class="slide-title">Loading Special Offers...</h3>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dynamic Category Sections Container -->
+    <div id="dynamicCategories"></div>
+  </div>
+
+  <!-- Customization & Order Form Modal -->
+  <div class="modal-backdrop" id="orderModal">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+      <h2 id="modalTitle">Order Item</h2>
+      <p class="item-summary" id="modalSubTitle"></p>
+
+      <form id="orderForm" onsubmit="submitOrder(event)">
+        <!-- Customer Info -->
+        <div class="form-group">
+          <label>Full Name *</label>
+          <input type="text" required placeholder="John Doe">
+        </div>
+        <div class="form-group">
+          <label>Phone Number *</label>
+          <input type="tel" required placeholder="519-000-0000">
+        </div>
+
+        <!-- Customizations -->
+        <div class="custom-section">
+          <div class="custom-title">Free Custom Options</div>
+          <div class="option-row">
+            <label><input type="radio" name="packaging" value="Standard Box" checked> Standard Bakery Box</label>
+            <span>+$0.00</span>
+          </div>
+          <div class="option-row">
+            <label><input type="radio" name="packaging" value="Eco Pouch"> Eco Bag</label>
+            <span>+$0.00</span>
+          </div>
+        </div>
+
+        <div class="custom-section">
+          <div class="custom-title">Paid Custom Add-ons</div>
+          <div class="option-row">
+            <label><input type="checkbox" class="addon-check" data-price="2.00" onchange="updateTotal()"> Gift Ribbon & Card</label>
+            <span>+$2.00</span>
+          </div>
+          <div class="option-row">
+            <label><input type="checkbox" class="addon-check" data-price="1.50" onchange="updateTotal()"> Extra Sprinkle Topping</label>
+            <span>+$1.50</span>
+          </div>
+          <div class="option-row">
+            <label><input type="checkbox" class="addon-check" data-price="3.00" onchange="updateTotal()"> Candle & Celebration Set</label>
+            <span>+$3.00</span>
+          </div>
+        </div>
+
+        <!-- Total Price -->
+        <div class="total-bar">
+          <span>Total Price:</span>
+          <span id="modalTotal">$0.00</span>
+        </div>
+
+        <button type="submit" class="btn-submit">Confirm & Place Order</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Paste your Google Apps Script Web App URL here
+    const GOOGLE_SHEET_ENDPOINT = 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL';
+
+    // Data mapped directly from your Google Sheet layout
+    const fallbackData = [
+      { id: 1, item: "Recent Offers", title: "15% off Dozen Cookies", image: "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=500", Category: "offer", price: "" },
+      { id: 2, item: "Chef Special", title: "Custom Wedding Cake", image: "https://images.unsplash.com/photo-1535141192574-5d4897c13136?w=500", Category: "offer", price: "" },
+      { id: 3, item: "Healthy Treats", title: "Vegan Sugar-Free Box", image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=500", Category: "offer", price: "" },
+      { id: 4, item: "Cookies", title: "SugarFree Cookie", image: "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?w=500", Category: "recommendation", price: 10 },
+      { id: 5, item: "Keto Cookies", title: "Healthy Cookies", image: "https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?w=500", Category: "recommendation", price: 20 },
+      { id: 6, item: "item p", title: "title P", image: "https://drive.google.com/file/d/1qYwB1EDMyBAvFHDa2Q0xcrUySTUB8Vup/view", Category: "under5", price: 4.99 },
+      { id: 7, item: "item q", title: "title Q", image: "https://images.unsplash.com/photo-1557089706-6fd9e0417765?w=500", Category: "under5", price: 4.99 },
+      { id: 8, item: "item r", title: "title R", image: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=500", Category: "under5", price: 4.99 },
+      { id: 9, item: "item s", title: "title S", image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=500", Category: "under5", price: 4.99 }
+    ];
+
+    let currentBasePrice = 0;
+
+    async function initPage() {
+      let data = [];
+      try {
+        const response = await fetch(GOOGLE_SHEET_ENDPOINT);
+        if(!response.ok) throw new Error();
+        data = await response.json();
+      } catch (e) {
+        data = fallbackData; // Fallback to spreadsheet data structure if endpoint is not connected yet
+      }
+
+      renderOffers(data.filter(d => String(d.Category).toLowerCase() === 'offer'));
+      renderCategories(data.filter(d => String(d.Category).toLowerCase() !== 'offer'));
+    }
+
+    // Render Offer Slider
+    function renderOffers(offers) {
+      const slider = document.getElementById('offerSlider');
+      if (offers.length === 0) return;
+
+      slider.innerHTML = offers.map((item, index) => `
+        <div class="slide ${index === 0 ? 'active' : ''}" style="background-image: url('${item.image}');">
+          <div class="slide-overlay">
+            <span class="slide-tag">${item.item}</span>
+            <h3 class="slide-title">${item.title}</h3>
+            <p class="slide-subtitle">Special Daily Offer</p>
+          </div>
+        </div>
+      `).join('');
+
+      let currentSlide = 0;
+      const slides = slider.querySelectorAll('.slide');
+      setInterval(() => {
+        slides[currentSlide].classList.remove('active');
+        currentSlide = (currentSlide + 1) % slides.length;
+        slides[currentSlide].classList.add('active');
+      }, 3500);
+    }
+
+    // Automatically Detect & Group Other Categories
+    function renderCategories(items) {
+      const container = document.getElementById('dynamicCategories');
+      container.innerHTML = '';
+
+      // Group data by Category name
+      const categories = {};
+      items.forEach(item => {
+        const catName = item.Category || 'Other';
+        if (!categories[catName]) categories[catName] = [];
+        categories[catName].push(item);
+      });
+
+      // Render a section for every category detected
+      Object.keys(categories).forEach(cat => {
+        const section = document.createElement('div');
+        
+        // Display pretty section header names
+        let headerLabel = cat;
+        if(cat === 'under5') headerLabel = 'Treats Under $5';
+        if(cat === 'recommendation') headerLabel = 'Recommended For You';
+
+        section.innerHTML = `
+          <h2 class="section-title">${headerLabel}</h2>
+          <div class="item-grid">
+            ${categories[cat].map(prod => `
+              <div class="card">
+                <img src="${prod.image}" class="card-img" alt="${prod.title}" onerror="this.src='https://via.placeholder.com/300x160?text=Sugar+Spoon'"/>
+                <div class="card-body">
+                  <h3 class="card-title">${prod.title}</h3>
+                  <p class="card-item-name">${prod.item}</p>
+                  <div class="card-footer">
+                    <span class="card-price">$${parseFloat(prod.price || 0).toFixed(2)}</span>
+                    <button class="btn-order" onclick="openModal('${prod.title}', '${prod.item}', ${prod.price || 0})">Order Now</button>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+        container.appendChild(section);
+      });
+    }
+
+    // Modal & Price Calculation Logic
+    function openModal(title, item, price) {
+      currentBasePrice = parseFloat(price) || 0;
+      document.getElementById('modalTitle').innerText = title;
+      document.getElementById('modalSubTitle').innerText = `Item: ${item}`;
+      
+      // Reset checkboxes
+      document.querySelectorAll('.addon-check').forEach(cb => cb.checked = false);
+      
+      updateTotal();
+      document.getElementById('orderModal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('orderModal').classList.remove('active');
+    }
+
+    function updateTotal() {
+      let addonTotal = 0;
+      document.querySelectorAll('.addon-check:checked').forEach(cb => {
+        addonTotal += parseFloat(cb.dataset.price);
+      });
+      const grandTotal = currentBasePrice + addonTotal;
+      document.getElementById('modalTotal').innerText = `$${grandTotal.toFixed(2)}`;
+    }
+
+    function submitOrder(e) {
+      e.preventDefault();
+      alert('Thank you! Your order has been placed successfully.');
+      closeModal();
+    }
+
+    // Initialize page
+    initPage();
+  </script>
+</body>
+</html>
